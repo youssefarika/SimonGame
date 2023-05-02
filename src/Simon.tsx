@@ -5,94 +5,88 @@ function Simon() {
   const [side, setSide] = useState<number[]>([]);
   const [Recordside, setRecordside] = useState<number[]>([]);
   const [count, setCount] = useState<number>(0)
-  const [guess, setGuess] = useState<number>(0)
   const [play, setPlay] = useState<boolean>(false)
-  const [timerIds, setTimerIds] = useState<number[]>([])
+  const [Timeouts, setTimeouts] = useState<number[]>([]);
     // refs
-    const buttonRef = useRef<HTMLButtonElement>(null);
     const greenRef = useRef<HTMLButtonElement | null>(null);
     const redRef = useRef<HTMLButtonElement | null>(null);
     const yellowRef = useRef<HTMLButtonElement | null>(null);
     const blueRef = useRef<HTMLButtonElement | null>(null);
-    
-  useEffect(() => {
-    console.log("Recordside:", Recordside);
-    console.log("side:", side);
-    console.log("count:", count);
-  }, [count, Recordside, side]);
-  
-  const clickPlay = () => {
-    setPlay(true)
-  }
-  let Timeouts: number[]
-  let reminder = () => {
-    let delay = 200;
-    Timeouts = []
+    // currents refs 
     const green = greenRef.current;
     const red = redRef.current;
     const yellow = yellowRef.current;
     const blue = blueRef.current;
-
-
+    const buttons = [green, red, yellow, blue];
+  useEffect(() => {
+    setPlay(true)
+    console.log("Recordside:", Recordside);
+    console.log("side:", side);
+  }, [count, Recordside, side]);
+  const clickPlay = () => {
+    if(play) {
+      setPlay(true)
+      reminder()
+    }
+  }
+  const resetGame = () => {
+    console.log(Timeouts, "Timeouts")
+    Timeouts.forEach(clearTimeout)
+    setCount(count => count = 0);
+    setRecordside(prevRecordside => prevRecordside = []);
+    setSide(prevside => prevside = []);
+  }
+  const Addcolor = () => {
+    let delay = 200;
+    setTimeouts([]);
     for (let i = 0; i <= count; i++) {
       Timeouts.push(setTimeout(() => {
         let currentGuess = Math.floor(Math.random() * 4);
-        if (currentGuess === 0) {
-          green?.classList.add("brightness-150");
-        } else if (currentGuess === 1) {
-          red?.classList.add("brightness-150");
-        } else if (currentGuess === 2) {
-          yellow?.classList.add("brightness-150");
-        } else if (currentGuess === 3) {
-          blue?.classList.add("brightness-150");
-        }
         setSide(preSide => [...preSide, currentGuess]);
-       setTimeout(() => {
-          if (currentGuess === 0) {
-            green?.classList.remove("brightness-150");
-          } else if (currentGuess === 1) {
-            red?.classList.remove("brightness-150");
-          } else if (currentGuess === 2) {
-            yellow?.classList.remove("brightness-150");
-          } else if (currentGuess === 3) {
-            blue?.classList.remove("brightness-150");
-          }
+        buttons[currentGuess]?.classList.add("brightness-150")
+        console.log(i, "i")
+        setTimeout(() => {
+          buttons[currentGuess]?.classList.remove("brightness-150")
           console.log("currentGuess", currentGuess);
         }, 400);
       }, delay));
       delay += 600;
     }
-    const buttons = [green, red, yellow, blue];
-    buttons.forEach((button, index: number) => {
-      button ? button.onclick = () => {
-        if (index < 4) {
-          setRecordside(prevRecordside => [...prevRecordside, index]);
-        }
-      } : null;
-    });
-    
-    if(side.length === Recordside.length && Recordside.join(" ") === side.join(" ")) {
-      setCount(prevCount => prevCount + 1);
-    } if(side.length === Recordside.length && Recordside.join(" ") !== side.join(" ")) {
-      console.log(Timeouts, "Timeouts")
-      Timeouts.forEach(clearTimeout)
-      setCount(count => count = 0);
-      setRecordside(prevRecordside => prevRecordside = []);
-      setSide(prevside => prevside = []);
-      console.log("no")
-    }  
+  }
+  const reminder = () => {
+    if(play) {
+        if(Recordside.join(" ") === side.join(" ")) {
+          setCount(prevCount => prevCount + 1);
+          Addcolor()
+        } if(side.length === Recordside.length && Recordside.join(" ") !== side.join(" ")) {
+          resetGame()
+        } 
+        buttons.forEach((button, index: number) => {
+          button ? button.onclick = () => {
+            if (index < 4) {
+              button.classList.add("opacity-50")
+              setRecordside(prevRecordside => [...prevRecordside, index]);
+            }
+              setTimeout(() => {
+                button.classList.remove("opacity-50")
+              }, 180);
+          } : null;
+        });
+    }
   };
   return (
     <div className="relative flex flex-col justify-center items-center">
       <div>
-        <Sim ref={greenRef} color= "bg-green-500" angle= "rounded-tl-full" />
-        <Sim ref={redRef} color= "bg-red-500" angle= "rounded-tr-full" />
+        <Sim ref={greenRef} onClick={() => reminder()}  color= "bg-green-500" angle= "rounded-tl-full" />
+        <Sim ref={redRef} onClick={() => reminder()} color= "bg-red-500" angle= "rounded-tr-full" />
       </div>
       <div>
-        <Sim ref={yellowRef} color= "bg-yellow-400" angle= "rounded-bl-full" />
-        <Sim ref={blueRef} color= "bg-blue-500" angle= "rounded-br-full" />
+        <Sim ref={yellowRef} onClick={() => reminder()} color= "bg-yellow-400" angle= "rounded-bl-full" />
+        <Sim ref={blueRef} onClick={() => reminder()} color= "bg-blue-500" angle= "rounded-br-full" />
       </div>
-      <button className="absolute border-none bg-neutral-900 text-white hover:outline-none focus:outline-none text-xl sm:text-2xl font-bold rounded-full w-[150px] sm:w-[175px] h-[150px] sm:h-[175px] transition duration-200 hover:scale-105" onClick={() => reminder()}>Play</button>
+      <button className="absolute border-none bg-neutral-900 text-white hover:outline-none focus:outline-none text-xl sm:text-2xl font-bold rounded-full w-[150px] sm:w-[175px] h-[150px] sm:h-[175px] transition duration-200 hover:scale-105" onClick={() => clickPlay()}>
+      {side.length === 0 ? "Play" : count}
+      </button>
     </div>
   );
 }
